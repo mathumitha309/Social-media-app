@@ -14,26 +14,33 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// Connect Database
 connectDB();
 
-app.get("/", (req, res) => {
-    res.send('API is running');
-});
-
+// API Routes
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
 
-// ✅ Serve frontend (React build)
+// ------------------ Deployment Setup ------------------ //
 const __dirname1 = path.resolve();
-app.use(express.static(path.join(__dirname1, '/build')));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname1, 'build', 'index.html'));
-});
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname1, '/build')));
 
+  app.get('*', (req, res) =>
+    res.sendFile(path.resolve(__dirname1, 'build', 'index.html'))
+  );
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running');
+  });
+}
+// ------------------------------------------------------ //
+
+// SOCKET.IO Setup
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -42,23 +49,24 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-    console.log('New client connected');
-  
-    socket.on('joinChat', (chatId) => {
-      socket.join(chatId);
-      console.log(`User joined chat ${chatId}`);
-    });
-  
-    socket.on('sendMessage', (message) => {
-      console.log(`Message received from client: ${message.content}`);
-      io.to(message.chatId).emit('receiveMessage', message);
-      console.log(`Message sent to chat ${message.chatId}: ${message.content}`);
-    });
-  
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
+  console.log('New client connected');
+
+  socket.on('joinChat', (chatId) => {
+    socket.join(chatId);
+    console.log(`User joined chat ${chatId}`);
+  });
+
+  socket.on('sendMessage', (message) => {
+    console.log(`Message received: ${message.content}`);
+    io.to(message.chatId).emit('receiveMessage', message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 });
 
+// Start Server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, console.log(`Server is running at PORT ${PORT}`));
+server.listen(PORT, console.log(`✅ Server is running at PORT ${PORT}`));
+
