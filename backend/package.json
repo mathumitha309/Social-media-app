@@ -1,14 +1,19 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
+  "type": "commonjs",
+
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "build": "cd ../frontend/app && npm install && npm run build && cp -r build ../backend/build || xcopy ..\\frontend\\app\\build ..\\backend\\build /E /I /Y"
   },
+
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.6.1",
@@ -23,3 +28,4 @@
     "speakeasy": "^2.0.0"
   }
 }
+
