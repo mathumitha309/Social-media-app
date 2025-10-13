@@ -17,7 +17,7 @@ app.use(express.json());
 connectDB();
 
 app.get("/", (req, res) => {
-    res.send('API is running')
+    res.send('API is running');
 });
 
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
@@ -25,6 +25,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
+
+// ✅ Serve frontend (React build)
+const __dirname1 = path.resolve();
+app.use(express.static(path.join(__dirname1, '/build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname1, 'build', 'index.html'));
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -50,8 +58,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       console.log('Client disconnected');
     });
-  });
-  
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, console.log(`Server is running at PORT ${PORT}`));
