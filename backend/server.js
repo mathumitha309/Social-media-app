@@ -21,6 +21,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
+
+const __dirname1 = path.resolve();
+
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname1, '/frontend/app/build')));
 
