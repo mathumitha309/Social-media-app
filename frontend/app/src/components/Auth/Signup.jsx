@@ -11,7 +11,7 @@ import {
 import Loader from "../Loader";
 import Message from "../Message";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../../api"; 
 
 function Signup() {
   const navigate = useNavigate();
@@ -154,7 +154,9 @@ function Signup() {
           "Content-Type": "application/json",
         },
       };
-      const { data } = await axios.post("/api/auth/signup", formValues, config);
+      const { data } = await api.post("/api/auth/signup", formValues);
+
+
       localStorage.setItem("userInfo", JSON.stringify(data));
       clearForm();
       window.location.reload();

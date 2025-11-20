@@ -9,8 +9,8 @@ import {
   Card,
 } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
 import Loader from "../Loader";
+import api from "../../api";
 import Message from "../Message";
 
 function Login() {
@@ -120,7 +120,7 @@ function Login() {
         },
       };
 
-      const { data } = await axios.post("/api/auth/login", formValues, config);
+      const { data } = await api.post("/api/auth/login", formValues);
       localStorage.setItem("userInfo", JSON.stringify(data));
       clearForm();
       window.location.reload();
