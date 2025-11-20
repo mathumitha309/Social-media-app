@@ -14,33 +14,20 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Connect Database
 connectDB();
 
-// API Routes
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
-
-// ------------------ Deployment Setup ------------------ //
-const __dirname1 = path.resolve();
-
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname1, '/build')));
+  app.use(express.static(path.join(__dirname1, '/frontend/app/build')));
 
   app.get('*', (req, res) =>
-    res.sendFile(path.resolve(__dirname1, 'build', 'index.html'))
+    res.sendFile(path.resolve(__dirname1, 'frontend', 'app', 'build', 'index.html'))
   );
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running');
-  });
 }
-// ------------------------------------------------------ //
-
-// SOCKET.IO Setup
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -66,7 +53,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, console.log(`✅ Server is running at PORT ${PORT}`));
 
