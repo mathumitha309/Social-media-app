@@ -1,61 +1,37 @@
 const express = require('express');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const postRoutes = require('./routes/postRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const path = require('path');
+const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const dotenv = require('dotenv');
+const connectDB = require('./config/db');
+const path = require('path');
 
+// 2️⃣ App Setup
 dotenv.config();
-
 const app = express();
 app.use(express.json());
 
+// 3️⃣ CORS MUST COME BEFORE ROUTES
+app.use(cors({
+  origin: "https://social-media-app-1-3nv9.onrender.com", // frontend
+  methods: "GET,POST,PUT,DELETE",
+  credentials: true
+}));
+
+// 4️⃣ Database connect
 connectDB();
 
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+// 5️⃣ API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chat', chatRoutes);
 
-const __dirname1 = path.resolve();
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname1, '/frontend/app/build')));
-
-  app.get('*', (req, res) =>
-    res.sendFile(path.resolve(__dirname1, 'frontend', 'app', 'build', 'index.html'))
-  );
-}
+// 6️⃣ Socket.io Setup AFTER CORS
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: "https://social-media-app-1-3nv9.onrender.com",
+    methods: ["GET", "POST"],
   },
 });
-
-io.on('connection', (socket) => {
-  console.log('New client connected');
-
-  socket.on('joinChat', (chatId) => {
-    socket.join(chatId);
-    console.log(`User joined chat ${chatId}`);
-  });
-
-  socket.on('sendMessage', (message) => {
-    console.log(`Message received: ${message.content}`);
-    io.to(message.chatId).emit('receiveMessage', message);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
-});
-
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, console.log(`✅ Server is running at PORT ${PORT}`));
-
