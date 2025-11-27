@@ -1,15 +1,11 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: "https://social-media-app-txhv.onrender.com", 
+const api = axios.create({
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? "https://social-media-app-txhv.onrender.com"  // Backend on render
+      : "http://localhost:5000",                       // Local
+  withCredentials: true,
 });
 
-API.interceptors.request.use((req) => {
-  const userInfo = localStorage.getItem("userInfo");
-  if (userInfo) {
-    req.headers.Authorization = `Bearer ${JSON.parse(userInfo).token}`;
-  }
-  return req;
-});
-
-export default API;
+export default api;

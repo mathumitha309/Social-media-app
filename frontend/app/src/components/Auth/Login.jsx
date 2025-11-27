@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Button,
@@ -17,31 +17,30 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const redirect = location.search ? location.search.split("=")[1] : "/";
+
   const [message, setMessage] = useState("");
   const [show, setShow] = useState("fa fa-eye-slash");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 🔥 MUST HAVE TOKEN HERE ALSO
   const [formValues, setFormValues] = useState({
     email: "",
     password: "",
+    token: "",   // 🔥 IMPORTANT (for 2FA login)
   });
 
   const [formErrors, setFormErrors] = useState({
     email: "",
     password: "",
-
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormValues({
-      ...formValues,
-      [name]: value,
-    });
+    setFormValues({ ...formValues, [name]: value });
     validateField(name, value);
   };
+
   const getValidationClass = (name) => {
     if (formValues[name] === "") return "";
     return formErrors[name] ? "is-invalid" : "is-valid";
@@ -51,13 +50,12 @@ function Login() {
     setFormValues({
       email: "",
       password: "",
-      token:""
+      token: "",
     });
   };
 
   const validateField = (name, value) => {
     let errorMessage = null;
-
     switch (name) {
       case "email":
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,35 +63,30 @@ function Login() {
           errorMessage = "Invalid email format..";
         }
         break;
-
       case "password":
         if (!value) {
           errorMessage = "This field is required...";
         }
         break;
-
-
-     
-
       default:
         break;
     }
 
-    setFormErrors({
-      ...formErrors,
-      [name]: errorMessage,
-    });
+    setFormErrors({ ...formErrors, [name]: errorMessage });
   };
 
+  // 🔥 TOKEN IS OPTIONAL – form should still submit
   const isFormValid = () => {
     return (
-      Object.values(formErrors).every((error) => error === null) &&
-      Object.values(formValues).every((value) => value !== "")
+      formValues.email !== "" &&
+      formValues.password !== "" &&
+      formErrors.email === null &&
+      formErrors.password === null
     );
   };
 
   const showPassword = () => {
-    var x = document.getElementById("pass1");
+    const x = document.getElementById("pass1");
     if (x.type === "password") {
       x.type = "text";
       setShow("fa fa-eye");
@@ -106,43 +99,40 @@ function Login() {
   const submitHandler = async (e) => {
     e.preventDefault();
     if (!isFormValid()) {
-      setMessage("Please fill our the form correctly");
+      setMessage("Please fill out the form correctly");
       return;
     }
+
     try {
       setLoading(true);
       setMessage("");
       setError("");
 
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
+      const { data } = await api.post("/api/auth/login", {
+        email: formValues.email,
+        password: formValues.password,
+        token: formValues.token || "", // 🔥 SEND token correctly
+      });
 
-      const { data } = await api.post("/api/auth/login", formValues);
       localStorage.setItem("userInfo", JSON.stringify(data));
       clearForm();
       window.location.reload();
       navigate("/profile");
     } catch (error) {
       setError(
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : error.message
+        error.response?.data?.message ||
+          "Login failed. Check credentials or 2FA"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(()=>{
-    const userInfo=localStorage.getItem("userInfo");
-    if(userInfo){
-      navigate("/profile")
-    }
-  },[navigate])
-  
+  useEffect(() => {
+    const userInfo = localStorage.getItem("userInfo");
+    if (userInfo) navigate("/profile");
+  }, [navigate]);
+
   return (
     <Container>
       <Row>
@@ -156,13 +146,21 @@ function Login() {
               <Form onSubmit={submitHandler}>
                 <br />
                 <h3 className="text-center bg-light text-dark">Login Here</h3>
+
                 {message && (
-                  <Message variant="success" onClose={() => setMessage("")}>
+                  <Message
+                    variant="success"
+                    onClose={() => setMessage("")}
+                  >
                     {message}
                   </Message>
                 )}
+
                 {error && (
-                  <Message variant="danger" onClose={() => setError(null)}>
+                  <Message
+                    variant="danger"
+                    onClose={() => setError(null)}
+                  >
                     {error}
                   </Message>
                 )}
@@ -185,14 +183,13 @@ function Login() {
 
                 <Form.Group className="mb-3">
                   <Form.Label>
-                    {" "}
                     <span>
                       <i className={show}></i>
                     </span>{" "}
                     Password
                   </Form.Label>
                   <InputGroup className="mb-3">
-                    <InputGroup.Checkbox onClick={showPassword} />{" "}
+                    <InputGroup.Checkbox onClick={showPassword} />
                     <Form.Control
                       required
                       type="password"
@@ -211,22 +208,14 @@ function Login() {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>
-                    {" "}
-              Passcode
-                  </Form.Label>
+                  <Form.Label>Passcode (2FA)</Form.Label>
                   <Form.Control
-                    
                     type="text"
                     name="token"
                     value={formValues.token}
-                    placeholder="Enter your 
-                   2 FA OTP if Enabled or Optional"
-                    
-                 
+                    placeholder="Enter 2FA OTP (Optional)"
                     onChange={handleChange}
                   />
-                   
                 </Form.Group>
 
                 <Button
@@ -242,12 +231,12 @@ function Login() {
 
             <Row className="py-3">
               <Col>
-                New User?
-                <Link to="/signup">Sign Up</Link>
+                New User? <Link to="/signup">Sign Up</Link>
               </Col>
             </Row>
           </Col>
         )}
+
         <Col md="4"></Col>
       </Row>
     </Container>
